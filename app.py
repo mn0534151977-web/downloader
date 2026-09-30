@@ -28,10 +28,16 @@ def download_media():
         except:
             pass
 
+    # הגדרות מעודכנות שעוקפות את הדרישה להתחברות לחשבון בשרתים
     ydl_opts = {
         'format': 'bestaudio/best' if is_mp3 else 'bestvideo+bestaudio/best',
         'outtmpl': 'downloaded_file.%(ext)s',
-        'cookiefile': 'cookies.txt',  # השורה הזו טוענת את העוגיות כדי לעקוף את חסימת הבוטים של יוטיוב
+        'noplaylist': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web']
+            }
+        }
     }
     
     if is_mp3:
@@ -52,7 +58,6 @@ def download_media():
         file_path = downloaded_files[0]
         file_name = os.path.basename(file_path)
         
-        # החזרת הקובץ המוכן ישירות להורדה
         return send_file(file_path, as_attachment=True, download_name=file_name)
         
     except Exception as e:
