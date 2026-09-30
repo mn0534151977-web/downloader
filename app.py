@@ -31,6 +31,7 @@ def download_media():
     ydl_opts = {
         'format': 'bestaudio/best' if is_mp3 else 'bestvideo+bestaudio/best',
         'outtmpl': 'downloaded_file.%(ext)s',
+        'cookiefile': 'cookies.txt',  # השורה הזו טוענת את העוגיות כדי לעקוף את חסימת הבוטים של יוטיוב
     }
     
     if is_mp3:
