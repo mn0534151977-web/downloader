@@ -1,13 +1,12 @@
-import os
-import glob
-from flask import Flask, request, jsonify, send_file
-import yt_dlp
-
 app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Downloader Server is Running! Send POST requests to /download"
 
 @app.route('/download', methods=['POST'])
 def download_media():
-    data = request.json
+    # שאר הקוד שלך נשאר בדיוק אותו דבר...    data = request.json
     query = data.get('query', '')
     is_mp3 = data.get('is_mp3', False)
     
