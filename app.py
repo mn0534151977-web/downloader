@@ -35,7 +35,7 @@ def download_media():
         else:
             search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
 
-        # הגדרות מתקדמות לעקיפת חסימות בוטים
+        # הגדרות בהתאם לסוג ההורדה (אודיו או וידאו)
         if is_mp3:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -66,11 +66,11 @@ def download_media():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(search_query, download=True)
             if not info:
-                return jsonify({"error": "No results found"}), 404
+                return jsonify({"error": "No results found or extraction failed"}), 404
                 
         downloaded_files = glob.glob("downloaded_file.*")
         if not downloaded_files:
-            return jsonify({"error": "Download file was not created"}), 500
+            return jsonify({"error": "Download file was not created by yt-dlp"}), 500
             
         file_path = downloaded_files[0]
         file_name = os.path.basename(file_path)
@@ -78,7 +78,8 @@ def download_media():
         return send_file(file_path, as_attachment=True, download_name=file_name)
         
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # החזרת השגיאה המדויקת בתור JSON כדי להבין מה התקלה
+        return jsonify({"error": f"Exception occurred: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
