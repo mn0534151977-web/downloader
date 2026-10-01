@@ -17,7 +17,8 @@ def download_media():
             return jsonify({"error": "No JSON data provided"}), 400
             
         query = data.get('query', '')
-        is_mp3 = data.get('is_mp3', True)
+        # כאן אנחנו מקבלים האם המשתמש ביקש וידאו או אודיו, כברירת מחדל נעשה וידאו אם לא צוין אחרת
+        is_mp3 = data.get('is_mp3', False)
         
         if not query:
             return jsonify({"error": "No query provided"}), 400
@@ -29,25 +30,36 @@ def download_media():
             except:
                 pass
 
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': 'downloaded_file.%(ext)s',
-            'noplaylist': True,
-            'ignoreerrors': True,
-        }
-        
+        # הגדרות עבור וידאו (או אודיו לפי הבחירה)
         if is_mp3:
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': 'downloaded_file.%(ext)s',
+                'noplaylist': True,
+                'ignoreerrors': True,
+            }
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
+        else:
+            # הגדרות להורדת וידאו איכותי ממוזג
+            ydl_opts = {
+                'format': 'bestvideo+bestaudio/best',
+                'outtmpl': 'downloaded_file.%(ext)s',
+                'noplaylist': True,
+                'ignoreerrors': True,
+                'merge_output_format': 'mp4',
+            }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # מנסה לחפש בסאונדקלאוד
-            info = ydl.extract_info(f"scsearch1:{query}", download=True)
+            # משתמשים בחיפוש כללי (או סאונדקלאוד אם מעדיפים רק אודיו, אבל לוידאו אפשר לחפש רגיל או ביוטיוב עם ההגדרות שעובדות)
+            # מכיוון שסאונדקלאוד זה בעיקר אודיו, עבור וידאו נשתמש בחיפוש רגיל או ביוטיוב עם פלטפורמת דפדפן:
+            search_query = f"ytsearch1:{query}"
+            info = ydl.extract_info(search_query, download=True)
             if not info:
-                return jsonify({"error": "No results found on SoundCloud"}), 404
+                return jsonify({"error": "No results found"}), 404
                 
         downloaded_files = glob.glob("downloaded_file.*")
         if not downloaded_files:
