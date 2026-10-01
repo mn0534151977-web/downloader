@@ -1,7 +1,6 @@
 import os
-import glob
-from flask import Flask, request, send_file, render_template_string
-import yt_dlp
+import requests
+from flask import Flask, request, send_file, render_template_string, redirect
 
 app = Flask(__name__)
 
@@ -16,21 +15,28 @@ HTML_TEMPLATE = """
         .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); display: inline-block; width: 400px; }
         input[type="text"] { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: right; }
         select, button { padding: 10px 20px; margin: 10px 5px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; }
-        button { background-color: #007BFF; color: white; }
-        button:hover { background-color: #0056b3; }
+        button { background-color: #28a745; color: white; font-weight: bold; }
+        button:hover { background-color: #218838; }
+        .loading { display: none; margin-top: 15px; color: #555; font-weight: bold; }
     </style>
+    <script>
+        function showLoading() {
+            document.getElementById('loading-msg').style.display = 'block';
+        }
+    </script>
 </head>
 <body>
     <div class="container">
-        <h2>הורדת אודיו / וידאו</h2>
-        <form action="/download-web" method="POST">
-            <input type="text" name="query" placeholder="הכנס שם שיר או קישור ישיר..." required><br>
+        <h2>מוריד מדיה סופי</h2>
+        <form action="/download" method="POST" onsubmit="showLoading()">
+            <input type="text" name="url" placeholder="הדבק קישור מיוטיוב או סאונדקלאוד..." required><br>
             <select name="type">
-                <option value="mp3">אודיו (MP3)</option>
-                <option value="mp4">וידאו (MP4)</option>
+                <option value="audio">אודיו (MP3)</option>
+                <option value="video">וידאו (MP4)</option>
             </select><br>
-            <button type="submit">הורד קובץ</button>
+            <button type="submit">הורד קובץ עכשיו</button>
         </form>
+        <div id="loading-msg" class="loading">מכין את הקובץ להורדה, אנתן להמתין מספר שניות...</div>
     </div>
 </body>
 </html>
@@ -40,58 +46,38 @@ HTML_TEMPLATE = """
 def home():
     return render_template_string(HTML_TEMPLATE)
 
-@app.route('/download-web', methods=['POST'])
-def download_web():
+@app.route('/download', methods=['POST'])
+def download():
     try:
-        query = request.form.get('query', '').strip()
-        media_type = request.form.get('type', 'mp3')
-        is_mp3 = (media_type == 'mp3')
+        url = request.form.get('url', '').strip()
+        media_type = request.form.get('type', 'audio')
         
-        if not query:
-            return "לא הוזן ערך", 400
+        if not url:
+            return "לא הוזן קישור", 400
 
-        for f in glob.glob("downloaded_file.*"):
-            try:
-                os.remove(f)
-            except:
-                pass
+        # שימוש ב-API חיצונים חזקים שעוקפים את החסימות של יוטיוב לשרתים
+        api_url = "https://api.cobalt.tools/api/json"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "url": url,
+            "downloadMode": "audio" if media_type == "audio" else "auto"
+        }
 
-        if query.startswith("http://") or query.startswith("https://"):
-            search_query = query
+        response = requests.post(api_url, json=payload, headers=headers)
+        res_data = response.json()
+
+        if "url" in res_data:
+            download_link = res_data["url"]
+            return redirect(download_link)
+        elif "picker" in res_data and len(res_data["picker"]) > 0:
+            download_link = res_data["picker"][0]["url"]
+            return redirect(download_link)
         else:
-            search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
+            return f"שגיאה בהפקת ההורדה מהשרת החיצוני: {res_data.get('text', 'לא ידוע')}", 500
 
-        if is_mp3:
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': 'downloaded_file.%(ext)s',
-                'noplaylist': True,
-                'ignoreerrors': True,
-            }
-        else:
-            # הגדרת פורמט בטוח שלא יפיל את השרת
-            ydl_opts = {
-                'format': '18 / b / best',
-                'outtmpl': 'downloaded_file.%(ext)s',
-                'noplaylist': True,
-                'ignoreerrors': True,
-                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(search_query, download=True)
-            if not info:
-                return "לא נמצאו תוצאות", 404
-                
-        downloaded_files = glob.glob("downloaded_file.*")
-        if not downloaded_files:
-            return "הקובץ לא נוצר", 500
-            
-        file_path = downloaded_files[0]
-        file_name = os.path.basename(file_path)
-        
-        return send_file(file_path, as_attachment=True, download_name=file_name)
-        
     except Exception as e:
         return f"שגיאת שרת: {str(e)}", 500
 
