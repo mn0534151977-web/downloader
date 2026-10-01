@@ -22,20 +22,17 @@ def download_media():
         if not query:
             return jsonify({"error": "No query provided"}), 400
 
-        # מחיקת קבצים קודמים שנשארו
         for f in glob.glob("downloaded_file.*"):
             try:
                 os.remove(f)
             except:
                 pass
 
-        # בדיקה האם הקלט הוא קישור ישיר או טקסט לחיפוש
         if query.startswith("http://") or query.startswith("https://"):
             search_query = query
         else:
             search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
 
-        # הגדרות בהתאם לסוג ההורדה (אודיו או וידאו)
         if is_mp3:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -78,7 +75,6 @@ def download_media():
         return send_file(file_path, as_attachment=True, download_name=file_name)
         
     except Exception as e:
-        # החזרת השגיאה המדויקת בתור JSON כדי להבין מה התקלה
         return jsonify({"error": f"Exception occurred: {str(e)}"}), 500
 
 if __name__ == '__main__':
