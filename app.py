@@ -5,7 +5,7 @@ import yt_dlp
 
 app = Flask(__name__)
 
-# דף הבית עם ממשק משתמש (חלון טקסט וכפתורים)
+# דף הבית עם ממשק משתמש נקי
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -25,7 +25,7 @@ HTML_TEMPLATE = """
     <div class="container">
         <h2>הורדת אודיו / וידאו</h2>
         <form action="/download-web" method="POST">
-            <input type="text" name="query" placeholder="הכנס שם שיר או קישור מיוטיוב..." required><br>
+            <input type="text" name="query" placeholder="הכנס שם שיר או קישור ישיר..." required><br>
             <select name="type">
                 <option value="mp3">אודיו (MP3)</option>
                 <option value="mp4">וידאו (MP4)</option>
@@ -44,24 +44,28 @@ def home():
 @app.route('/download-web', methods=['POST'])
 def download_web():
     try:
-        query = request.form.get('query', '')
+        query = request.form.get('query', '').strip()
         media_type = request.form.get('type', 'mp3')
         is_mp3 = (media_type == 'mp3')
         
         if not query:
             return "לא הוזן ערך לחיפוש", 400
 
+        # ניקוי קבצים קודמים שנשארו
         for f in glob.glob("downloaded_file.*"):
             try:
                 os.remove(f)
             except:
                 pass
 
+        # זיהוי חכם: האם מדובר בקישור או בטקסט חיפוש
         if query.startswith("http://") or query.startswith("https://"):
             search_query = query
         else:
+            # אם זה טקסט חופשי: לאודיו מחפשים ב-SoundCloud, לוידאו מחפשים ביוטיוב
             search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
 
+        # הגדרות הורדה
         if is_mp3:
             ydl_opts = {
                 'format': 'bestaudio/best',
