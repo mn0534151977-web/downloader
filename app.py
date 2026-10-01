@@ -5,7 +5,7 @@ import yt_dlp
 
 app = Flask(__name__)
 
-# דף הבית עם ממשק משйמש (חלון טקסט וכפתורים)
+# דף הבית עם ממשק משתמש (חלון טקסט וכפתורים)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -71,7 +71,7 @@ def download_web():
             }
         else:
             ydl_opts = {
-                'format': 'mp4/best',
+                'format': 'best[ext=mp4]/best',
                 'outtmpl': 'downloaded_file.%(ext)s',
                 'noplaylist': True,
                 'ignoreerrors': True,
