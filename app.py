@@ -10,7 +10,7 @@ HTML_TEMPLATE = """
 <html dir="rtl" lang="he">
 <head>
     <meta charset="UTF-8">
-    <title>מוריד מדיה ישיר</title>
+    <title>מוריד מדיה יציב</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f9; text-align: center; padding: 50px; }
         .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); display: inline-block; width: 400px; }
@@ -28,7 +28,7 @@ HTML_TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <h2>מוריד מדיה ישיר</h2>
+        <h2>מוריד מדיה יציב</h2>
         <form action="/download" method="POST" onsubmit="showLoading()">
             <input type="text" name="query" placeholder="הכנס שם שיר או קישור ישיר..." required><br>
             <select name="type">
@@ -57,7 +57,7 @@ def download():
         if not query:
             return "לא הוזן ערך", 400
 
-        # מחיקת קבצים קודמים שנשארו בתיקייה
+        # מחיקת קבצים קודמים
         for f in glob.glob("downloaded_file.*"):
             try:
                 os.remove(f)
@@ -69,28 +69,33 @@ def download():
         else:
             search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
 
-        # הגדרות חילוץ ישירות ויציבות בגרסה העדכנית של yt-dlp
+        # הגדרות מתקדמות לעקיפת חסימות ה-IP של יוטיוב בשרתים
+        common_opts = {
+            'outtmpl': 'downloaded_file.%(ext)s',
+            'noplaylist': True,
+            'ignoreerrors': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web']
+                }
+            }
+        }
+
         if is_mp3:
-            ydl_opts = {
+            common_opts.update({
                 'format': 'bestaudio/best',
-                'outtmpl': 'downloaded_file.%(ext)s',
-                'noplaylist': True,
-                'ignoreerrors': True,
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
                 }],
-            }
+            })
         else:
-            # פורמט 18 יורד מיידית כקובץ משולב ללא צורך בהתקנת רכיבי מיזוג חיצוניים
-            ydl_opts = {
+            common_opts.update({
                 'format': '18/best[ext=mp4]/best',
-                'outtmpl': 'downloaded_file.%(ext)s',
-                'noplaylist': True,
-                'ignoreerrors': True,
-            }
+            })
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(common_opts) as ydl:
             info = ydl.extract_info(search_query, download=True)
             if not info:
                 return "לא נמצאו תוצאות", 404
