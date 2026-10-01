@@ -1,3 +1,53 @@
+import os
+import glob
+from flask import Flask, request, send_file, render_template_string
+import yt_dlp
+
+# הגדרת האפליקציה חייבת להיות לפני כל שימוש ב-app.route!
+app = Flask(__name__)
+
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מוריד מדיה יציב</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; text-align: center; padding: 50px; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); display: inline-block; width: 400px; }
+        input[type="text"] { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: right; }
+        select, button { padding: 10px 20px; margin: 10px 5px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; }
+        button { background-color: #007BFF; color: white; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        .loading { display: none; margin-top: 15px; color: #555; font-weight: bold; }
+    </style>
+    <script>
+        function showLoading() {
+            document.getElementById('loading-msg').style.display = 'block';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>מוריד מדיה יציב</h2>
+        <form action="/download" method="POST" onsubmit="showLoading()">
+            <input type="text" name="query" placeholder="הכנס שם שיר או קישור ישיר..." required><br>
+            <select name="type">
+                <option value="mp3">אודיו (MP3)</option>
+                <option value="mp4">וידאו (MP4 - 360p)</option>
+            </select><br>
+            <button type="submit">הורד קובץ</button>
+        </form>
+        <div id="loading-msg" class="loading">מוריד את הקובץ לשרת, נא להמתין מספר שניות...</div>
+    </div>
+</body>
+</html>
+"""
+
+@app.route('/')
+def home():
+    return render_template_string(HTML_TEMPLATE)
+
 @app.route('/download', methods=['POST'])
 def download():
     try:
@@ -63,3 +113,7 @@ def download():
         
     except Exception as e:
         return f"שגיאת שרת פנימית: {str(e)}", 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
