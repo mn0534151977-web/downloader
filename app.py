@@ -29,6 +29,12 @@ def download_media():
             except:
                 pass
 
+        # בדיקה האם הקלט הוא קישור ישיר או טקסט לחיפוש
+        if query.startswith("http://") or query.startswith("https://"):
+            search_query = query
+        else:
+            search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
+
         # הגדרות בהתאם לסוג ההורדה (אודיו או וידאו)
         if is_mp3:
             ydl_opts = {
@@ -42,7 +48,6 @@ def download_media():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
-            search_query = f"scsearch1:{query}"
         else:
             ydl_opts = {
                 'format': 'bestvideo+bestaudio/best',
@@ -57,7 +62,6 @@ def download_media():
                     }
                 }
             }
-            search_query = f"ytsearch1:{query}"
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(search_query, download=True)
