@@ -117,3 +117,16 @@ def download():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
+common_opts = {
+            'outtmpl': 'downloaded_file.%(ext)s',
+            'noplaylist': True,
+            'ignoreerrors': True,
+            'no_warnings': True,
+            'cookiefile': 'cookies.txt',  # <--- הוספת שורה זו כדי לעקוף את החסימה של יוטיוב
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'web']
+                }
+            }
+        }
