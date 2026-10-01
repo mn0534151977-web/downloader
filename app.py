@@ -5,7 +5,6 @@ import yt_dlp
 
 app = Flask(__name__)
 
-# דף הבית עם ממשק משתמש נקי
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -49,23 +48,20 @@ def download_web():
         is_mp3 = (media_type == 'mp3')
         
         if not query:
-            return "לא הוזן ערך לחיפוש", 400
+            return "לא הוזן ערך", 400
 
-        # ניקוי קבצים קודמים שנשארו
         for f in glob.glob("downloaded_file.*"):
             try:
                 os.remove(f)
             except:
                 pass
 
-        # זיהוי חכם: האם מדובר בקישור או בטקסט חיפוש
         if query.startswith("http://") or query.startswith("https://"):
             search_query = query
         else:
-            # אם זה טקסט חופשי: לאודיו מחפשים ב-SoundCloud, לוידאו מחפשים ביוטיוב
             search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
 
-        # הגדרות הורדה
+        # הגדרות חסינות ויציבות להורדה
         if is_mp3:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -75,10 +71,16 @@ def download_web():
             }
         else:
             ydl_opts = {
-                'format': 'best[ext=mp4]/best',
+                'format': 'best[height<=720][ext=mp4]/best[ext=mp4]/best',
                 'outtmpl': 'downloaded_file.%(ext)s',
                 'noplaylist': True,
                 'ignoreerrors': True,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'web']
+                    }
+                }
             }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
