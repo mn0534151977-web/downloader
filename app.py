@@ -73,7 +73,7 @@ def download():
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios', 'web']
+                    'player_client': ['tv', 'tv_embedded', 'android', 'web']
                 }
             }
         }
@@ -107,6 +107,7 @@ def download():
         return send_file(file_path, as_attachment=True, download_name=file_name)
         
     except Exception as e:
+        print(f"DEBUG ERROR: {str(e)}")
         return f"שגיאת שרת פנימית: {str(e)}", 500
 
 if __name__ == '__main__':
