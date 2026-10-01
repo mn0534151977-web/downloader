@@ -28,14 +28,14 @@ def download_media():
         except:
             pass
 
-    # הגדרות מעודכנות שעוקפות את הדרישה להתחברות לחשבון בשרתים
     ydl_opts = {
         'format': 'bestaudio/best' if is_mp3 else 'bestvideo+bestaudio/best',
         'outtmpl': 'downloaded_file.%(ext)s',
         'noplaylist': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web']
+                'player_client': ['web', 'mweb']
             }
         }
     }
