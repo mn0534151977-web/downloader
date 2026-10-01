@@ -30,14 +30,14 @@ HTML_TEMPLATE = """
     <div class="container">
         <h2>מוריד מדיה יציב</h2>
         <form action="/download" method="POST" onsubmit="showLoading()">
-            <input type="text" name="query" placeholder="הדבק קישור יוטיוב כאן..." required><br>
+            <input type="text" name="query" placeholder="הדבק קישור או חפש שם שיר..." required><br>
             <select name="type">
                 <option value="mp3">אודיו (MP3)</option>
                 <option value="mp4">וידאו (MP4)</option>
             </select><br>
             <button type="submit">הורד קובץ</button>
         </form>
-        <div id="loading-msg" class="loading">מוריד את הקובץ לשרת, נא להמתין מספר שניות...</div>
+        <div id="loading-msg" class="loading">מעבד את המדיה, נא להמתין מספר שניות...</div>
     </div>
 </body>
 </html>
@@ -55,7 +55,7 @@ def download():
         is_mp3 = (media_type == 'mp3')
         
         if not query:
-            return "לא הוזן קישור", 400
+            return "לא הוזן ערך", 400
 
         # מחיקת קבצים קודמים שנשארו
         for f in glob.glob("downloaded_file.*"):
@@ -63,6 +63,12 @@ def download():
                 os.remove(f)
             except:
                 pass
+
+        # זיהוי האם מדובר בקישור או בטקסט חיפוש
+        if query.startswith("http://") or query.startswith("https://"):
+            search_query = query
+        else:
+            search_query = f"ytsearch1:{query}"
 
         common_opts = {
             'outtmpl': 'downloaded_file.%(ext)s',
@@ -93,9 +99,9 @@ def download():
             })
 
         with yt_dlp.YoutubeDL(common_opts) as ydl:
-            info = ydl.extract_info(query, download=True)
+            info = ydl.extract_info(search_query, download=True)
             if not info:
-                return "שגיאה: לא ניתן לעבד את הקישור.", 404
+                return "שגיאה: לא נמצאו תוצאות או שהקישור חסום.", 404
                 
         downloaded_files = glob.glob("downloaded_file.*")
         if not downloaded_files:
