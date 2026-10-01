@@ -75,3 +75,18 @@ def download_media():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+else:
+            ydl_opts = {
+                'format': 'bestvideo+bestaudio/best',
+                'outtmpl': 'downloaded_file.%(ext)s',
+                'noplaylist': True,
+                'ignoreerrors': True,
+                'merge_output_format': 'mp4',
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['web', 'mweb']
+                    }
+                }
+            }
+            search_query = f"ytsearch1:{query}"
