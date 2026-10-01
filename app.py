@@ -17,20 +17,20 @@ def download_media():
             return jsonify({"error": "No JSON data provided"}), 400
             
         query = data.get('query', '')
-        # כאן אנחנו מקבלים האם המשתמש ביקש וידאו או אודיו, כברירת מחדל נעשה וידאו אם לא צוין אחרת
-        is_mp3 = data.get('is_mp3', False)
+        # כברירת מחדל מוריד אודיו, אלא אם כן נשלח במפורש false
+        is_mp3 = data.get('is_mp3', True)
         
         if not query:
             return jsonify({"error": "No query provided"}), 400
 
-        # מחיקת קבצים קודמים
+        # מחיקת קבצים קודמים שנשארו
         for f in glob.glob("downloaded_file.*"):
             try:
                 os.remove(f)
             except:
                 pass
 
-        # הגדרות עבור וידאו (או אודיו לפי הבחירה)
+        # הגדרות בהתאם לסוג ההורדה (אודיו או וידאו)
         if is_mp3:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -43,20 +43,24 @@ def download_media():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
+            search_query = f"scsearch1:{query}"
         else:
-            # הגדרות להורדת וידאו איכותי ממוזג
             ydl_opts = {
                 'format': 'bestvideo+bestaudio/best',
                 'outtmpl': 'downloaded_file.%(ext)s',
                 'noplaylist': True,
                 'ignoreerrors': True,
                 'merge_output_format': 'mp4',
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['web', 'mweb']
+                    }
+                }
             }
+            search_query = f"ytsearch1:{query}"
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # משתמשים בחיפוש כללי (או סאונדקלאוד אם מעדיפים רק אודיו, אבל לוידאו אפשר לחפש רגיל או ביוטיוב עם ההגדרות שעובדות)
-            # מכיוון שסאונדקלאוד זה בעיקר אודיו, עבור וידאו נשתמש בחיפוש רגיל או ביוטיוב עם פלטפורמת דפדפן:
-            search_query = f"ytsearch1:{query}"
             info = ydl.extract_info(search_query, download=True)
             if not info:
                 return jsonify({"error": "No results found"}), 404
@@ -75,18 +79,3 @@ def download_media():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-else:
-            ydl_opts = {
-                'format': 'bestvideo+bestaudio/best',
-                'outtmpl': 'downloaded_file.%(ext)s',
-                'noplaylist': True,
-                'ignoreerrors': True,
-                'merge_output_format': 'mp4',
-                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['web', 'mweb']
-                    }
-                }
-            }
-            search_query = f"ytsearch1:{query}"
