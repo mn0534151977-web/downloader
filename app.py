@@ -1,6 +1,6 @@
 import os
 import glob
-from flask import Flask, request, jsonify, send_file, render_template_string
+from flask import Flask, request, send_file, render_template_string
 import yt_dlp
 
 app = Flask(__name__)
@@ -61,7 +61,6 @@ def download_web():
         else:
             search_query = f"scsearch1:{query}" if is_mp3 else f"ytsearch1:{query}"
 
-        # הגדרות חסינות ויציבות להורדה
         if is_mp3:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -70,17 +69,13 @@ def download_web():
                 'ignoreerrors': True,
             }
         else:
+            # הגדרת פורמט בטוח שלא יפיל את השרת
             ydl_opts = {
-                'format': 'best[height<=720][ext=mp4]/best[ext=mp4]/best',
+                'format': '18 / b / best',
                 'outtmpl': 'downloaded_file.%(ext)s',
                 'noplaylist': True,
                 'ignoreerrors': True,
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android', 'web']
-                    }
-                }
             }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -98,7 +93,7 @@ def download_web():
         return send_file(file_path, as_attachment=True, download_name=file_name)
         
     except Exception as e:
-        return f"שגיאה: {str(e)}", 500
+        return f"שגיאת שרת: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
