@@ -65,3 +65,65 @@ def download_media():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+import os
+import glob
+from flask import Flask, request, jsonify, send_file
+import yt_dlp
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Downloader Server is Running!"
+
+@app.route('/download', methods=['POST'])
+def download_media():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No JSON data provided"}), 400
+        
+    query = data.get('query', '')
+    is_mp3 = data.get('is_mp3', True) # ברירת מחדל לאודיו
+    
+    if not query:
+        return jsonify({"error": "No query provided"}), 400
+
+    # מחיקת קבצים קודמים
+    for f in glob.glob("downloaded_file.*"):
+        try:
+            os.remove(f)
+        except:
+            pass
+
+    # חיפוש והורדה דרך SoundCloud שעובד חלק בלי חסימות
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': 'downloaded_file.%(ext)s',
+        'noplaylist': True,
+    }
+    
+    ydl_opts['postprocessors'] = [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }]
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # מחפש אוטומטית בסאונדקלאוד במקום ביוטיוב
+            info = ydl.extract_info(f"scsearch1:{query}", download=True)
+            
+        downloaded_files = glob.glob("downloaded_file.*")
+        if not downloaded_files:
+            return jsonify({"error": "Download failed"}), 500
+            
+        file_path = downloaded_files[0]
+        file_name = os.path.basename(file_path)
+        
+        return send_file(file_path, as_attachment=True, download_name=file_name)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
