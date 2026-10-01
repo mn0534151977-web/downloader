@@ -70,19 +70,19 @@ def download():
         else:
             search_query = f"ytsearch1:{query}"
 
-        common_opts = {
+common_opts = {
             'outtmpl': 'downloaded_file.%(ext)s',
             'noplaylist': True,
             'ignoreerrors': True,
             'no_warnings': True,
+            'cookiefile': 'cookies.txt',
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android', 'ios', 'web']
+                    'player_client': ['ios', 'web']
                 }
             }
         }
-
         if is_mp3:
             common_opts.update({
                 'format': 'bestaudio/best',
