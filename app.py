@@ -17,7 +17,6 @@ def download_media():
             return jsonify({"error": "No JSON data provided"}), 400
             
         query = data.get('query', '')
-        # כברירת מחדל מוריד אודיו, אלא אם כן נשלח במפורש false
         is_mp3 = data.get('is_mp3', True)
         
         if not query:
