@@ -3,7 +3,6 @@ import glob
 from flask import Flask, request, send_file, render_template_string
 import yt_dlp
 
-# הגדרת האפליקציה חייבת להיות לפני כל שימוש ב-app.route!
 app = Flask(__name__)
 
 HTML_TEMPLATE = """
@@ -31,10 +30,10 @@ HTML_TEMPLATE = """
     <div class="container">
         <h2>מוריד מדיה יציב</h2>
         <form action="/download" method="POST" onsubmit="showLoading()">
-            <input type="text" name="query" placeholder="הכנס שם שיר או קישור ישיר..." required><br>
+            <input type="text" name="query" placeholder="הדבק קישור יוטיוב כאן..." required><br>
             <select name="type">
                 <option value="mp3">אודיו (MP3)</option>
-                <option value="mp4">וידאו (MP4 - 360p)</option>
+                <option value="mp4">וידאו (MP4)</option>
             </select><br>
             <button type="submit">הורד קובץ</button>
         </form>
@@ -56,21 +55,16 @@ def download():
         is_mp3 = (media_type == 'mp3')
         
         if not query:
-            return "לא הוזן ערך", 400
+            return "לא הוזן קישור", 400
 
-        # מחיקת קבצים קודמים
+        # מחיקת קבצים קודמים שנשארו
         for f in glob.glob("downloaded_file.*"):
             try:
                 os.remove(f)
             except:
                 pass
 
-        if query.startswith("http://") or query.startswith("https://"):
-            search_query = query
-        else:
-            search_query = f"ytsearch1:{query}"
-
-common_opts = {
+        common_opts = {
             'outtmpl': 'downloaded_file.%(ext)s',
             'noplaylist': True,
             'ignoreerrors': True,
@@ -83,6 +77,7 @@ common_opts = {
                 }
             }
         }
+
         if is_mp3:
             common_opts.update({
                 'format': 'bestaudio/best',
@@ -98,13 +93,13 @@ common_opts = {
             })
 
         with yt_dlp.YoutubeDL(common_opts) as ydl:
-            info = ydl.extract_info(search_query, download=True)
+            info = ydl.extract_info(query, download=True)
             if not info:
-                return "שגיאה: לא נמצאו תוצאות או שהסרטון חסום להורדה.", 404
+                return "שגיאה: לא ניתן לעבד את הקישור.", 404
                 
         downloaded_files = glob.glob("downloaded_file.*")
         if not downloaded_files:
-            return "שגיאה: קובץ המדיה לא נוצר עקב מגבלת שרת או חסימה.", 500
+            return "שגיאה: הקובץ לא נוצר.", 500
             
         file_path = downloaded_files[0]
         file_name = os.path.basename(file_path)
@@ -117,16 +112,3 @@ common_opts = {
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
-common_opts = {
-            'outtmpl': 'downloaded_file.%(ext)s',
-            'noplaylist': True,
-            'ignoreerrors': True,
-            'no_warnings': True,
-            'cookiefile': 'cookies.txt',  # <--- הוספת שורה זו כדי לעקוף את החסימה של יוטיוב
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'ios', 'web']
-                }
-            }
-        }
